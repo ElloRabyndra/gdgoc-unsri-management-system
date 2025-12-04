@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "GDGoC Unsri",
+  title: "GDGoC Unsri Management System",
   description: "Manage your organization members, events and attendance",
 };
 
