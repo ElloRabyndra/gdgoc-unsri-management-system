@@ -1,4 +1,5 @@
 export type Division =
+  | "No Division"
   | "Machine Learning"
   | "Cyber Security"
   | "Front-End Development"
@@ -11,7 +12,8 @@ export type Division =
   | "Community Development"
   | "Videography"
   | "Copywriting"
-  | "Creative Design";
+  | "Creative Design"
+  ;
 
 export type MemberRole = "Member" | "Core Team" | "Executive";
 export type MemberStatus = "Active" | "Non-Active";
@@ -45,6 +47,7 @@ export interface Attendance {
 }
 
 export const DIVISIONS: Division[] = [
+  "No Division",
   "Machine Learning",
   "Cyber Security",
   "Front-End Development",

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
@@ -37,14 +38,39 @@ export function MemberForm({
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(memberSchema),
     defaultValues: {
-      name: member?.name || "",
-      email: member?.email || "",
-      division: member?.division || "",
-      role: member?.role || "",
-      status: member?.status || "",
-      joinDate: member?.joinDate || new Date(),
+      name: "",
+      email: "",
+      division: "",
+      role: "",
+      status: "",
+      joinDate: new Date(),
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      if (member) {
+        form.reset({
+          name: member.name,
+          email: member.email,
+          division: member.division,
+          role: member.role,
+          status: member.status,
+          joinDate: member.joinDate,
+        });
+      } else {
+        // Add mode - reset to empty
+        form.reset({
+          name: "",
+          email: "",
+          division: "",
+          role: "",
+          status: "",
+          joinDate: new Date(),
+        });
+      }
+    }
+  }, [open, member, form]);
 
   const handleSubmit = (data: MemberFormValues) => {
     onSubmit(data);

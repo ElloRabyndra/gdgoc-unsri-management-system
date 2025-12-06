@@ -1,6 +1,17 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { z } from "zod";
-import { dummyMembers } from "@/lib/dummy-members";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  Timestamp,
+  query,
+  orderBy,
+} from "firebase/firestore";
+import { db } from "@/firebase/config";
 import {
   type Member,
   type Division,
@@ -22,7 +33,8 @@ export type MemberFormValues = z.infer<typeof memberSchema>;
 
 export function useMembers() {
   // Data state
-  const [members, setMembers] = useState<Member[]>(dummyMembers);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   // Filter state
   const [search, setSearch] = useState("");
@@ -35,6 +47,44 @@ export function useMembers() {
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [deletingMember, setDeletingMember] = useState<Member | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch members from Firestore
+  const fetchMembers = async () => {
+    try {
+      setIsLoadingData(true);
+      const membersRef = collection(db, "members");
+      const q = query(membersRef, orderBy("joinDate", "desc"));
+      const querySnapshot = await getDocs(q);
+
+      const membersData: Member[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name,
+          email: data.email,
+          division: data.division as Division,
+          role: data.role as MemberRole,
+          status: data.status as MemberStatus,
+          joinDate:
+            data.joinDate instanceof Timestamp
+              ? data.joinDate.toDate()
+              : new Date(data.joinDate),
+        };
+      });
+
+      setMembers(membersData);
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      toast.error("Failed to load members");
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  // Fetch on mount
+  useEffect(() => {
+    fetchMembers();
+  }, []);
 
   // Filtered members
   const filteredMembers = useMemo(() => {
@@ -53,38 +103,67 @@ export function useMembers() {
   }, [members, search, divisionFilter, roleFilter, statusFilter]);
 
   // CRUD operations
-  const addMember = (data: any) => {
-    const newMember: Member = {
-      id: String(Date.now()),
-      ...data,
-      division: data.division as Division,
-      role: data.role as MemberRole,
-      status: data.status as MemberStatus,
-    };
-    setMembers((prev) => [...prev, newMember]);
-    toast.success("Member added successfully!");
+  const addMember = async (data: any) => {
+    try {
+      const membersRef = collection(db, "members");
+      const newMemberData = {
+        name: data.name,
+        email: data.email,
+        division: data.division,
+        role: data.role,
+        status: data.status,
+        joinDate: Timestamp.fromDate(data.joinDate),
+      };
+
+      await addDoc(membersRef, newMemberData);
+      toast.success("Member added successfully!");
+
+      // Refresh data
+      await fetchMembers();
+    } catch (error) {
+      console.error("Error adding member:", error);
+      toast.error("Failed to add member");
+      throw error;
+    }
   };
 
-  const updateMember = (id: string, data: any) => {
-    setMembers((prev) =>
-      prev.map((m) =>
-        m.id === id
-          ? {
-              ...m,
-              ...data,
-              division: data.division as Division,
-              role: data.role as MemberRole,
-              status: data.status as MemberStatus,
-            }
-          : m
-      )
-    );
-    toast.success("Member updated successfully!");
+  const updateMember = async (id: string, data: any) => {
+    try {
+      const memberRef = doc(db, "members", id);
+      const updateData = {
+        name: data.name,
+        email: data.email,
+        division: data.division,
+        role: data.role,
+        status: data.status,
+        joinDate: Timestamp.fromDate(data.joinDate),
+      };
+
+      await updateDoc(memberRef, updateData);
+      toast.success("Member updated successfully!");
+
+      // Refresh data
+      await fetchMembers();
+    } catch (error) {
+      console.error("Error updating member:", error);
+      toast.error("Failed to update member");
+      throw error;
+    }
   };
 
-  const deleteMember = (id: string) => {
-    setMembers((prev) => prev.filter((m) => m.id !== id));
-    toast.success("Member deleted successfully!");
+  const deleteMember = async (id: string) => {
+    try {
+      const memberRef = doc(db, "members", id);
+      await deleteDoc(memberRef);
+      toast.success("Member deleted successfully!");
+
+      // Refresh data
+      await fetchMembers();
+    } catch (error) {
+      console.error("Error deleting member:", error);
+      toast.error("Failed to delete member");
+      throw error;
+    }
   };
 
   // UI Handlers
@@ -104,24 +183,35 @@ export function useMembers() {
 
   const handleFormSubmit = async (data: any) => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    if (editingMember) {
-      updateMember(editingMember.id, data);
-    } else {
-      addMember(data);
+    try {
+      if (editingMember) {
+        await updateMember(editingMember.id, data);
+      } else {
+        await addMember(data);
+      }
+
+      setIsFormOpen(false);
+      setEditingMember(null);
+    } catch (error) {
+      // Error already handled in CRUD functions
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
-    setIsFormOpen(false);
-    setEditingMember(null);
   };
 
   const handleConfirmDelete = async () => {
     if (!deletingMember) return;
 
-    deleteMember(deletingMember.id);
-    setDeletingMember(null);
+    setIsLoading(true);
+    try {
+      await deleteMember(deletingMember.id);
+      setDeletingMember(null);
+    } catch (error) {
+      // Error already handled in deleteMember
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFormOpenChange = (open: boolean) => {
@@ -140,6 +230,7 @@ export function useMembers() {
   return {
     members,
     filteredMembers,
+    isLoadingData,
     search,
     setSearch,
     divisionFilter,
