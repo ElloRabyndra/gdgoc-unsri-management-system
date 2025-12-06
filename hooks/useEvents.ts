@@ -1,6 +1,17 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { dummyEvents } from "@/lib/dummy-events";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  Timestamp,
+  query,
+  orderBy,
+} from "firebase/firestore";
+import { db } from "@/firebase/config";
 import { type Event } from "@/types";
 import { toast } from "sonner";
 
@@ -8,7 +19,8 @@ export function useEvents() {
   const router = useRouter();
 
   // Data state
-  const [events, setEvents] = useState<Event[]>(dummyEvents);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   // Filter state
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -17,6 +29,44 @@ export function useEvents() {
   // UI state
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
+
+  // Fetch events from Firestore
+  const fetchEvents = async () => {
+    try {
+      setIsLoadingData(true);
+      const eventsRef = collection(db, "events");
+      const q = query(eventsRef, orderBy("date", "desc"));
+      const querySnapshot = await getDocs(q);
+
+      const eventsData: Event[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          date:
+            data.date instanceof Timestamp
+              ? data.date.toDate()
+              : new Date(data.date),
+          type: data.type,
+          status: data.status,
+          description: data.description,
+          committee: data.committee || [],
+        };
+      });
+
+      setEvents(eventsData);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      toast.error("Failed to load events");
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  // Fetch on mount
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   // Filtered events
   const filteredEvents = useMemo(() => {
@@ -29,25 +79,67 @@ export function useEvents() {
   }, [events, typeFilter, statusFilter]);
 
   // CRUD operations
-  const addEvent = (eventData: any) => {
-    const newEvent: Event = {
-      id: String(Date.now()),
-      ...eventData,
-    };
-    setEvents((prev) => [...prev, newEvent]);
-    toast.success("Event added successfully!");
+  const addEvent = async (eventData: any) => {
+    try {
+      const eventsRef = collection(db, "events");
+      const newEventData = {
+        title: eventData.title,
+        date: Timestamp.fromDate(eventData.date),
+        type: eventData.type,
+        status: eventData.status,
+        description: eventData.description,
+        committee: eventData.committee || [],
+      };
+
+      await addDoc(eventsRef, newEventData);
+      toast.success("Event added successfully!");
+
+      // Refresh data
+      await fetchEvents();
+    } catch (error) {
+      console.error("Error adding event:", error);
+      toast.error("Failed to add event");
+      throw error;
+    }
   };
 
-  const updateEvent = (id: string, eventData: any) => {
-    setEvents((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, ...eventData } : e))
-    );
-    toast.success("Event updated successfully!");
+  const updateEvent = async (id: string, eventData: any) => {
+    try {
+      const eventRef = doc(db, "events", id);
+      const updateData = {
+        title: eventData.title,
+        date: Timestamp.fromDate(eventData.date),
+        type: eventData.type,
+        status: eventData.status,
+        description: eventData.description,
+        committee: eventData.committee || [],
+      };
+
+      await updateDoc(eventRef, updateData);
+      toast.success("Event updated successfully!");
+
+      // Refresh data
+      await fetchEvents();
+    } catch (error) {
+      console.error("Error updating event:", error);
+      toast.error("Failed to update event");
+      throw error;
+    }
   };
 
-  const deleteEvent = (id: string) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
-    toast.success("Event deleted successfully!");
+  const deleteEvent = async (id: string) => {
+    try {
+      const eventRef = doc(db, "events", id);
+      await deleteDoc(eventRef);
+      toast.success("Event deleted successfully!");
+
+      // Refresh data
+      await fetchEvents();
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast.error("Failed to delete event");
+      throw error;
+    }
   };
 
   // Navigation handlers
@@ -72,7 +164,7 @@ export function useEvents() {
   // Dialog handlers
   const handleConfirmDelete = async () => {
     if (!deletingEvent) return;
-    deleteEvent(deletingEvent.id);
+    await deleteEvent(deletingEvent.id);
     setDeletingEvent(null);
   };
 
@@ -97,6 +189,7 @@ export function useEvents() {
     // Data
     events,
     filteredEvents,
+    isLoadingData,
     selectedEvent,
     deletingEvent,
     typeFilter,
