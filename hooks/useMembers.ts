@@ -20,13 +20,23 @@ export const memberSchema = z.object({
 
 export type MemberFormValues = z.infer<typeof memberSchema>;
 
-export function useMembersData() {
+export function useMembers() {
+  // Data state
   const [members, setMembers] = useState<Member[]>(dummyMembers);
+
+  // Filter state
   const [search, setSearch] = useState("");
   const [divisionFilter, setDivisionFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
+  // UI state
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [deletingMember, setDeletingMember] = useState<Member | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Filtered members
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
       const matchesSearch =
@@ -42,6 +52,7 @@ export function useMembersData() {
     });
   }, [members, search, divisionFilter, roleFilter, statusFilter]);
 
+  // CRUD operations
   const addMember = (data: any) => {
     const newMember: Member = {
       id: String(Date.now()),
@@ -76,6 +87,56 @@ export function useMembersData() {
     toast.success("Member deleted successfully!");
   };
 
+  // UI Handlers
+  const handleAddMember = () => {
+    setEditingMember(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditMember = (member: Member) => {
+    setEditingMember(member);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteMember = (member: Member) => {
+    setDeletingMember(member);
+  };
+
+  const handleFormSubmit = async (data: any) => {
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    if (editingMember) {
+      updateMember(editingMember.id, data);
+    } else {
+      addMember(data);
+    }
+
+    setIsLoading(false);
+    setIsFormOpen(false);
+    setEditingMember(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingMember) return;
+
+    deleteMember(deletingMember.id);
+    setDeletingMember(null);
+  };
+
+  const handleFormOpenChange = (open: boolean) => {
+    setIsFormOpen(open);
+    if (!open) {
+      setEditingMember(null);
+    }
+  };
+
+  const handleDeleteDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      setDeletingMember(null);
+    }
+  };
+
   return {
     members,
     filteredMembers,
@@ -87,8 +148,16 @@ export function useMembersData() {
     setRoleFilter,
     statusFilter,
     setStatusFilter,
-    addMember,
-    updateMember,
-    deleteMember,
+    isFormOpen,
+    editingMember,
+    deletingMember,
+    isLoading,
+    handleAddMember,
+    handleEditMember,
+    handleDeleteMember,
+    handleFormSubmit,
+    handleConfirmDelete,
+    handleFormOpenChange,
+    handleDeleteDialogOpenChange,
   };
 }

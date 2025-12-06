@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { type Member } from "@/types";
-import { memberSchema, type MemberFormValues } from "@/hooks/useMembersData";
+import { memberSchema, type MemberFormValues } from "@/hooks/useMembers";
 import { NameField } from "./field/NameField";
 import { EmailField } from "./field/EmailField";
 import { DivisionField } from "./field/DivisionField";

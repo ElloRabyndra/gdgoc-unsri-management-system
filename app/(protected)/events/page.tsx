@@ -1,56 +1,31 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+
 import { EventsPageHeader } from "@/components/event/EventsPageHeader";
 import { EventsFilters } from "@/components/event/EventsFilters";
 import { EventsGrid } from "@/components/event/EventsGrid";
 import { EventDetail } from "@/components/event/EventDetail";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { dummyMembers } from "@/lib/dummy-members";
-import { useEventsData } from "@/hooks/useEventsData";
-import { type Event } from "@/types";
+import { useEvents } from "@/hooks/useEvents";
 
 export default function Events() {
-  const router = useRouter();
   const {
     events,
     filteredEvents,
+    selectedEvent,
+    deletingEvent,
     typeFilter,
     setTypeFilter,
     statusFilter,
     setStatusFilter,
-    deleteEvent,
-  } = useEventsData();
-
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
-
-  const handleAddEvent = () => {
-    router.push("/events/new");
-  };
-
-  const handleEditEvent = () => {
-    if (selectedEvent) {
-      // Simpan ke sessionStorage untuk diakses di form
-      sessionStorage.setItem("editEvent", JSON.stringify(selectedEvent));
-      router.push(`/events/edit/${selectedEvent.id}`);
-      setSelectedEvent(null);
-    }
-  };
-
-  const handleDeleteEvent = () => {
-    if (selectedEvent) {
-      setDeletingEvent(selectedEvent);
-      setSelectedEvent(null);
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!deletingEvent) return;
-
-    deleteEvent(deletingEvent.id);
-    setDeletingEvent(null);
-  };
+    handleAddEvent,
+    handleEditEvent,
+    handleDeleteEvent,
+    handleConfirmDelete,
+    handleEventClick,
+    handleDetailClose,
+    handleDeleteDialogClose,
+  } = useEvents();
 
   return (
     <div className="space-y-6">
@@ -66,13 +41,13 @@ export default function Events() {
       <EventsGrid
         events={events}
         filteredEvents={filteredEvents}
-        onEventClick={setSelectedEvent}
+        onEventClick={handleEventClick}
         onAddEvent={handleAddEvent}
       />
 
       <EventDetail
         open={!!selectedEvent}
-        onOpenChange={(open) => !open && setSelectedEvent(null)}
+        onOpenChange={(open) => !open && handleDetailClose()}
         event={selectedEvent}
         members={dummyMembers}
         onEdit={handleEditEvent}
@@ -81,7 +56,7 @@ export default function Events() {
 
       <ConfirmDialog
         open={!!deletingEvent}
-        onOpenChange={(open) => !open && setDeletingEvent(null)}
+        onOpenChange={(open) => !open && handleDeleteDialogClose()}
         title="Delete Event"
         description={`Are you sure you want to delete "${deletingEvent?.title}"? This action cannot be undone.`}
         confirmLabel="Delete"
