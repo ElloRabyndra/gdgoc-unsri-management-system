@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,9 +19,12 @@ export type EventFormValues = z.infer<typeof eventSchema>;
 
 interface UseEventFormProps {
   event?: Event | null;
+  onSubmit: (data: EventFormValues) => void | Promise<void>;
 }
 
-export function useEventForm({ event }: UseEventFormProps = {}) {
+export function useEventForm({ event, onSubmit }: UseEventFormProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const [committeeSearch, setCommitteeSearch] = useState("");
   const members = dummyMembers;
 
@@ -60,13 +64,35 @@ export function useEventForm({ event }: UseEventFormProps = {}) {
     }
   };
 
+  const handleSubmit = async (data: EventFormValues) => {
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    await onSubmit(data);
+
+    setIsLoading(false);
+    router.push("/events");
+  };
+
+  const handleCancel = () => {
+    router.push("/events");
+  };
+
+  const handleBack = () => {
+    router.push("/events");
+  };
+
   return {
     form,
+    isLoading,
     members,
     filteredMembers,
     selectedCommittee,
     committeeSearch,
     setCommitteeSearch,
     toggleCommitteeMember,
+    handleSubmit,
+    handleCancel,
+    handleBack,
   };
 }

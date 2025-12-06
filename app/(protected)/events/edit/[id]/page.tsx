@@ -1,21 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { toast } from "sonner";
+import { useParams, useRouter } from "next/navigation";
 import { EventFormHeader } from "@/components/event/EventFormHeader";
 import { EventDetailsForm } from "@/components/event/EventDetailsForm";
 import { CommitteePanel } from "@/components/event/CommitteePanel";
 import { useEventForm, type EventFormValues } from "@/hooks/useEventForm";
-import { dummyEvents } from "@/lib/dummy-events";
+import { useEvents } from "@/hooks/useEvents";
 
 export default function EditEventPage() {
   const router = useRouter();
   const params = useParams();
   const eventId = params.id as string;
 
-  // Ambil event dari dummy data berdasarkan ID
-  const event = dummyEvents.find((e) => e.id === eventId);
+  const { getEventById, updateEvent } = useEvents();
+  const event = getEventById(eventId);
 
   // Redirect jika event tidak ditemukan
   if (!event) {
@@ -23,46 +21,37 @@ export default function EditEventPage() {
     return null;
   }
 
-  const [isLoading, setIsLoading] = useState(false);
+  const handleSubmit = async (data: EventFormValues) => {
+    updateEvent(eventId, data);
+  };
 
   const {
     form,
+    isLoading,
     members,
     filteredMembers,
     selectedCommittee,
     committeeSearch,
     setCommitteeSearch,
     toggleCommitteeMember,
-  } = useEventForm({ event });
-
-  const handleSubmit = async (data: EventFormValues) => {
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Simpan update ke sessionStorage
-    sessionStorage.setItem(
-      "editEvent",
-      JSON.stringify({ ...data, id: eventId })
-    );
-
-    toast.success("Event updated successfully!");
-    router.push("/events");
-    setIsLoading(false);
-  };
+    handleSubmit: onSubmit,
+    handleCancel,
+    handleBack,
+  } = useEventForm({ event, onSubmit: handleSubmit });
 
   return (
     <div className="space-y-6 animate-fade-in">
       <EventFormHeader
         title="Edit Event"
         description="Update event details for GDGoC UNSRI"
-        onBack={() => router.push("/events")}
+        onBack={handleBack}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <EventDetailsForm
           form={form}
-          onSubmit={handleSubmit}
-          onCancel={() => router.push("/events")}
+          onSubmit={onSubmit}
+          onCancel={handleCancel}
           isLoading={isLoading}
           isEdit={true}
         />
