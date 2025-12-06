@@ -10,7 +10,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { LoginFormValues } from "@/hooks/useLogin";
+import { LoginFormValues } from "@/hooks/useAuth";
 
 interface LoginFormProps {
   form: UseFormReturn<LoginFormValues>;

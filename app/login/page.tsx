@@ -2,13 +2,10 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { LoginHeader } from "@/components/login/LoginHeader";
 import { LoginForm } from "@/components/login/LoginForm";
-import { LoginDivider } from "@/components/login/LoginDivider";
-import { GoogleSignInButton } from "@/components/login/GoogleSignInButton";
-import { useLogin } from "@/hooks/useLogin";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Login() {
-  const { form, isLoading, isGoogleLoading, handleLogin, handleGoogleSignIn } =
-    useLogin();
+  const { form, isLoading, handleLogin } = useAuth();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
@@ -18,11 +15,6 @@ export default function Login() {
         </CardHeader>
         <CardContent className="space-y-6">
           <LoginForm form={form} onSubmit={handleLogin} isLoading={isLoading} />
-          <LoginDivider />
-          <GoogleSignInButton
-            onClick={handleGoogleSignIn}
-            isLoading={isGoogleLoading}
-          />
         </CardContent>
       </Card>
     </div>
