@@ -10,6 +10,7 @@ import {
   Timestamp,
   query,
   orderBy,
+  where,
 } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import {
@@ -153,8 +154,42 @@ export function useMembers() {
 
   const deleteMember = async (id: string) => {
     try {
+      // Delete the member
       const memberRef = doc(db, "members", id);
       await deleteDoc(memberRef);
+
+      // Delete all attendance records for this member
+      const attendanceRef = collection(db, "attendance");
+      const attendanceQuery = query(attendanceRef, where("memberId", "==", id));
+      const attendanceSnapshot = await getDocs(attendanceQuery);
+
+      // Delete all related attendance records
+      const deleteAttendancePromises = attendanceSnapshot.docs.map((doc) =>
+        deleteDoc(doc.ref)
+      );
+      await Promise.all(deleteAttendancePromises);
+
+      // Remove member from all event committees
+      const eventsRef = collection(db, "events");
+      const eventsQuery = query(
+        eventsRef,
+        where("committee", "array-contains", id)
+      );
+      const eventsSnapshot = await getDocs(eventsQuery);
+
+      // Update all events that have this member in committee
+      const updateEventPromises = eventsSnapshot.docs.map(async (eventDoc) => {
+        const eventData = eventDoc.data();
+        const updatedCommittee = eventData.committee.filter(
+          (memberId: string) => memberId !== id
+        );
+
+        return updateDoc(eventDoc.ref, {
+          committee: updatedCommittee,
+        });
+      });
+      await Promise.all(updateEventPromises);
+
       toast.success("Member deleted successfully!");
 
       // Refresh data

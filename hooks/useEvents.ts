@@ -10,6 +10,7 @@ import {
   Timestamp,
   query,
   orderBy,
+  where,
 } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { type Event } from "@/types";
@@ -129,8 +130,21 @@ export function useEvents() {
 
   const deleteEvent = async (id: string) => {
     try {
+      // Hapus event
       const eventRef = doc(db, "events", id);
       await deleteDoc(eventRef);
+
+      // Hapus semua attendance yang terkait dengan event ini
+      const attendanceRef = collection(db, "attendance");
+      const q = query(attendanceRef, where("eventId", "==", id));
+      const attendanceSnapshot = await getDocs(q);
+
+      // Hapus semua attendance records
+      const deletePromises = attendanceSnapshot.docs.map((doc) =>
+        deleteDoc(doc.ref)
+      );
+      await Promise.all(deletePromises);
+
       toast.success("Event deleted successfully!");
 
       // Refresh data
