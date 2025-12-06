@@ -1,25 +1,35 @@
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { dummyMembers } from "@/lib/dummy-members";
 import { dummyEvents } from "@/lib/dummy-events";
 import { dummyAttendance } from "@/lib/dummy-attendance";
 import { type Attendance } from "@/types";
 import { toast } from "sonner";
 
-export function useAttendanceData() {
+export function useAttendance() {
+  const router = useRouter();
+
+  // Data state
   const [attendance, setAttendance] = useState<Attendance[]>(dummyAttendance);
+  const events = dummyEvents;
+
+  // UI state
   const [selectedEventId, setSelectedEventId] = useState<string>(
-    dummyEvents[0]?.id || ""
+    events[0]?.id || ""
   );
   const [searchQuery, setSearchQuery] = useState("");
 
-  const events = dummyEvents;
-
+  // Filtered members
   const filteredMembers = useMemo(() => {
     return dummyMembers.filter((member) =>
       member.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [searchQuery]);
 
+  // Selected event
+  const selectedEvent = events.find((e) => e.id === selectedEventId);
+
+  // Attendance operations
   const toggleAttendance = (memberId: string, eventId: string) => {
     setAttendance((prev) => {
       const existing = prev.find(
@@ -54,18 +64,22 @@ export function useAttendanceData() {
     return { presentCount, totalEvents, percentage };
   };
 
-  const selectedEvent = events.find((e) => e.id === selectedEventId);
+  // Navigation handler
+  const handleCreateEvent = () => {
+    router.push("/events");
+  };
 
   return {
     events,
+    filteredMembers,
+    selectedEvent,
     selectedEventId,
     setSelectedEventId,
-    selectedEvent,
     searchQuery,
     setSearchQuery,
-    filteredMembers,
     toggleAttendance,
     isPresent,
     getMemberAttendanceStats,
+    handleCreateEvent,
   };
 }

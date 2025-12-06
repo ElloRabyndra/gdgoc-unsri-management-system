@@ -1,13 +1,12 @@
 "use client";
-import { useState } from "react";
+
 import { MembersPageHeader } from "@/components/members/MembersPageHeader";
 import { MembersFilters } from "@/components/members/MembersFilters";
 import { MembersList } from "@/components/members/MembersList";
 import { MemberForm } from "@/components/members/MemberForm";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { useMembersData } from "@/hooks/useMembersData";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { type Member } from "@/types";
+import { useMembers } from "@/hooks/useMembers";
+import { useIsMobile } from "@/hooks/useMobile";
 
 export default function Members() {
   const isMobile = useIsMobile();
@@ -22,51 +21,18 @@ export default function Members() {
     setRoleFilter,
     statusFilter,
     setStatusFilter,
-    addMember,
-    updateMember,
-    deleteMember,
-  } = useMembersData();
-
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [deletingMember, setDeletingMember] = useState<Member | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleAddMember = () => {
-    setEditingMember(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEditMember = (member: Member) => {
-    setEditingMember(member);
-    setIsFormOpen(true);
-  };
-
-  const handleDeleteMember = (member: Member) => {
-    setDeletingMember(member);
-  };
-
-  const handleFormSubmit = async (data: any) => {
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    if (editingMember) {
-      updateMember(editingMember.id, data);
-    } else {
-      addMember(data);
-    }
-
-    setIsLoading(false);
-    setIsFormOpen(false);
-    setEditingMember(null);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!deletingMember) return;
-
-    deleteMember(deletingMember.id);
-    setDeletingMember(null);
-  };
+    isFormOpen,
+    editingMember,
+    deletingMember,
+    isLoading,
+    handleAddMember,
+    handleEditMember,
+    handleDeleteMember,
+    handleFormSubmit,
+    handleConfirmDelete,
+    handleFormOpenChange,
+    handleDeleteDialogOpenChange,
+  } = useMembers();
 
   return (
     <div className="space-y-6">
@@ -94,7 +60,7 @@ export default function Members() {
 
       <MemberForm
         open={isFormOpen}
-        onOpenChange={setIsFormOpen}
+        onOpenChange={handleFormOpenChange}
         member={editingMember}
         onSubmit={handleFormSubmit}
         isLoading={isLoading}
@@ -102,7 +68,7 @@ export default function Members() {
 
       <ConfirmDialog
         open={!!deletingMember}
-        onOpenChange={(open) => !open && setDeletingMember(null)}
+        onOpenChange={handleDeleteDialogOpenChange}
         title="Delete Member"
         description={`Are you sure you want to delete ${deletingMember?.name}? This action cannot be undone.`}
         confirmLabel="Delete"
