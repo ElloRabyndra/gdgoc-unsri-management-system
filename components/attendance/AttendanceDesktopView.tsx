@@ -120,7 +120,7 @@ export function AttendanceDesktopView({
                           stats.percentage >= 80
                             ? "green"
                             : stats.percentage >= 50
-                            ? "yellow"
+                            ? "warning"
                             : "gray"
                         }
                       >

@@ -41,6 +41,7 @@ export interface Event {
 }
 
 export interface Attendance {
+  id?: string;
   memberId: string;
   eventId: string;
   present: boolean;

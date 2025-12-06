@@ -1,12 +1,14 @@
 "use client";
 
-import { Calendar } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
 import { AttendancePageHeader } from "@/components/attendance/AttendancePageHeader";
 import { AttendanceMobileView } from "@/components/attendance/AttendanceMobileView";
 import { AttendanceDesktopView } from "@/components/attendance/AttendanceDesktopView";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useAttendance } from "@/hooks/useAttendance";
 import { useIsMobile } from "@/hooks/useMobile";
+
+const MAX_EVENTS_FOR_TABLE = 6;
 
 export default function AttendancePage() {
   const isMobile = useIsMobile();
@@ -18,11 +20,32 @@ export default function AttendancePage() {
     setSelectedEventId,
     searchQuery,
     setSearchQuery,
+    isLoadingData,
     toggleAttendance,
     isPresent,
     getMemberAttendanceStats,
     handleCreateEvent,
   } = useAttendance();
+
+  // Use compact view when mobile OR events > 6
+  const useCompactView = isMobile || events.length > MAX_EVENTS_FOR_TABLE;
+
+  // Loading state
+  if (isLoadingData) {
+    return (
+      <div className="space-y-6">
+        <AttendancePageHeader />
+        <div className="flex min-h-[400px] items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">
+              Loading attendance data...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Empty state
   if (events.length === 0) {
@@ -40,8 +63,8 @@ export default function AttendancePage() {
     );
   }
 
-  // Mobile view
-  if (isMobile) {
+  // Compact view (mobile or > 6 events)
+  if (useCompactView) {
     return (
       <div className="space-y-6">
         <AttendancePageHeader />
@@ -61,7 +84,7 @@ export default function AttendancePage() {
     );
   }
 
-  // Desktop view
+  // Desktop table view (≤6 events)
   return (
     <div className="space-y-6">
       <AttendancePageHeader />

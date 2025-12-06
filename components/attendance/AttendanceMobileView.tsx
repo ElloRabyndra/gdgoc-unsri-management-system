@@ -67,7 +67,7 @@ export function AttendanceMobileView({
             >
               {events.map((event) => (
                 <SelectItem key={event.id} value={event.id}>
-                  <span className="truncate block max-w-[250px]">
+                  <span className="truncate block max-w-[250px] sm:max-w-none">
                     {event.title} - {format(event.date, "MMM d, yyyy")}
                   </span>
                 </SelectItem>
@@ -105,7 +105,7 @@ export function AttendanceMobileView({
                     stats.percentage >= 80
                       ? "green"
                       : stats.percentage >= 50
-                      ? "yellow"
+                      ? "warning"
                       : "gray"
                   }
                   className="mt-1 text-xs"
