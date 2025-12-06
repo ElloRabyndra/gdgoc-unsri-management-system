@@ -1,7 +1,13 @@
-import { User } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+"use client";
+import { User } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuthContext } from "@/context/AuthContext";
 
 export function Navbar() {
+  const { user } = useAuthContext();
+
+  // Get user display name or email
+  const displayName = user?.displayName || user?.email?.split("@")[0] || "User";
   return (
     <header className="bg-sidebar sticky top-0 z-30 flex h-16 items-center justify-end border-b border-border px-6 lg:px-8">
       {/* Spacer for mobile menu button */}
@@ -9,7 +15,9 @@ export function Navbar() {
 
       {/* User Avatar */}
       <div className="flex items-center gap-2 sm:gap-3">
-        <span className="text-sm text-muted-foreground truncate max-w-[120px] sm:max-w-none">Admin User</span>
+        <span className="text-sm text-muted-foreground truncate max-w-[120px] sm:max-w-none">
+          {displayName}
+        </span>
         <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-border">
           <AvatarFallback className="bg-primary/10 text-primary">
             <User className="h-4 w-4" />
