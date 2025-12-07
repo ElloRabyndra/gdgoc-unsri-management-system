@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DIVISIONS } from "@/types";
-import { type MemberFormValues } from "../memberSchema";
+import { type MemberFormValues } from "@/hooks/useMembers";
 
 interface DivisionFieldProps {
   control: Control<MemberFormValues>;

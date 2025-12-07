@@ -16,7 +16,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { type MemberFormValues } from "../memberSchema";
+import { type MemberFormValues } from "@/hooks/useMembers";
 
 interface JoinDateFieldProps {
   control: Control<MemberFormValues>;
