@@ -117,10 +117,10 @@ export function AttendanceDesktopView({
                     <td className="px-4 py-3 text-center">
                       <Badge
                         variant={
-                          stats.percentage >= 80
+                          stats.percentage >= 75
                             ? "green"
                             : stats.percentage >= 50
-                            ? "yellow"
+                            ? "warning"
                             : "gray"
                         }
                       >

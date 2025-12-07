@@ -6,28 +6,24 @@ import { EventDetailsForm } from "@/components/event/EventDetailsForm";
 import { CommitteePanel } from "@/components/event/CommitteePanel";
 import { useEventForm, type EventFormValues } from "@/hooks/useEventForm";
 import { useEvents } from "@/hooks/useEvents";
+import { Loader2 } from "lucide-react";
 
 export default function EditEventPage() {
   const router = useRouter();
   const params = useParams();
   const eventId = params.id as string;
 
-  const { getEventById, updateEvent } = useEvents();
+  const { getEventById, updateEvent, isLoadingData } = useEvents();
   const event = getEventById(eventId);
 
-  // Redirect jika event tidak ditemukan
-  if (!event) {
-    router.push("/events");
-    return null;
-  }
-
   const handleSubmit = async (data: EventFormValues) => {
-    updateEvent(eventId, data);
+    await updateEvent(eventId, data);
   };
 
   const {
     form,
     isLoading,
+    isLoadingMembers,
     members,
     filteredMembers,
     selectedCommittee,
@@ -38,6 +34,24 @@ export default function EditEventPage() {
     handleCancel,
     handleBack,
   } = useEventForm({ event, onSubmit: handleSubmit });
+
+  // Loading state
+  if (isLoadingData || isLoadingMembers) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading event...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect jika event tidak ditemukan
+  if (!event) {
+    router.push("/events");
+    return null;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">

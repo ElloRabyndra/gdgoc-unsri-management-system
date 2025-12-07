@@ -1,30 +1,36 @@
 "use client";
-import { useMemo } from "react";
+
+import { Loader2 } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { MembersByDivisionChart } from "@/components/dashboard/MembersByDivisionChart";
-import { dummyMembers } from "@/lib/dummy-members";
-import { dummyEvents } from "@/lib/dummy-events";
+import { useDashboard } from "@/hooks/useDashboard";
 
 export default function Dashboard() {
-  const stats = useMemo(() => {
-    const totalMembers = dummyMembers.length;
-    const totalEvents = dummyEvents.length;
-    const upcomingEvents = dummyEvents.filter(
-      (e) => e.status === "On Going" || e.status === "Pending"
-    ).length;
-    const activeMembers = dummyMembers.filter(
-      (m) => m.status === "Active"
-    ).length;
+  const { members, stats, isLoadingData } = useDashboard();
 
-    return { totalMembers, totalEvents, upcomingEvents, activeMembers };
-  }, []);
+  // Loading state
+  if (isLoadingData) {
+    return (
+      <div className="space-y-6">
+        <DashboardHeader />
+        <div className="flex min-h-[400px] items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">
+              Loading dashboard...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <DashboardHeader />
       <DashboardStats stats={stats} />
-      <MembersByDivisionChart members={dummyMembers} />
+      <MembersByDivisionChart members={members} />
     </div>
   );
 }

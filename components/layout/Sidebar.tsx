@@ -12,6 +12,7 @@ import {
   User,
   LogOut,
   Menu,
+  Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Members", href: "/members", icon: Users },
   { title: "Events", href: "/events", icon: Calendar },
+  { title: "Leaderboard", href: "/leaderboard", icon: Trophy },
   { title: "Attendance", href: "/attendance", icon: CheckSquare },
   { title: "Profile", href: "/profile", icon: User },
 ];
