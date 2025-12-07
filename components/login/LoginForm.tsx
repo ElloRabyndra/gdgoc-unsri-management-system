@@ -90,7 +90,7 @@ export function LoginForm({ form, onSubmit, isLoading }: LoginFormProps) {
 
         <Button
           type="submit"
-          className="w-full h-12 text-base font-semibold bg-gradient-to-r from-google-blue to-google-blue hover:opacity-90 transition-opacity shadow-lg shadow-google-blue/25"
+          className="w-full h-12 text-base font-semibold bg-linear-to-r from-google-blue to-google-blue hover:opacity-90 transition-opacity shadow-lg shadow-google-blue/25"
           disabled={isLoading}
         >
           {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}

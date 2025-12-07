@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function LoginDecoration() {
   return (
-    <div className="hidden lg:flex relative overflow-hidden lg:bg-gradient-to-br from-google-blue via-google-blue to-google-green -mt-8">
+    <div className="hidden lg:flex relative overflow-hidden lg:bg-linear-to-br from-google-blue via-google-blue to-google-green -mt-8">
       {/* Decorative circles */}
       <div className="absolute top-20 left-20 w-72 h-72 bg-google-red/20 rounded-full blur-3xl animate-pulse" />
       <div
