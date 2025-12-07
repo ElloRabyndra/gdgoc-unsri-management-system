@@ -102,7 +102,7 @@ export function AttendanceMobileView({
                 </div>
                 <Badge
                   variant={
-                    stats.percentage >= 80
+                    stats.percentage >= 75
                       ? "green"
                       : stats.percentage >= 50
                       ? "warning"
