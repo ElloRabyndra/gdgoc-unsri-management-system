@@ -1,10 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { dummyMembers } from "@/lib/dummy-members";
-import { type Event } from "@/types";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "@/firebase/config";
+import { type Event, type Member } from "@/types";
+import { toast } from "sonner";
 
 const eventSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -26,19 +28,77 @@ export function useEventForm({ event, onSubmit }: UseEventFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [committeeSearch, setCommitteeSearch] = useState("");
-  const members = dummyMembers;
+  const [members, setMembers] = useState<Member[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(true);
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
-      title: event?.title || "",
-      date: event?.date || new Date(),
-      type: event?.type || "",
-      status: event?.status || "",
-      description: event?.description || "",
-      committee: event?.committee || [],
+      title: "",
+      date: new Date(),
+      type: "",
+      status: "",
+      description: "",
+      committee: [],
     },
   });
+
+  // Fetch members from Firestore
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        setIsLoadingMembers(true);
+        const membersRef = collection(db, "members");
+        const q = query(membersRef, orderBy("name", "asc"));
+        const querySnapshot = await getDocs(q);
+
+        const membersData: Member[] = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name,
+            email: data.email,
+            division: data.division,
+            role: data.role,
+            status: data.status,
+            joinDate: data.joinDate.toDate(),
+          };
+        });
+
+        setMembers(membersData);
+      } catch (error) {
+        console.error("Error fetching members:", error);
+        toast.error("Failed to load members");
+      } finally {
+        setIsLoadingMembers(false);
+      }
+    };
+
+    fetchMembers();
+  }, []);
+
+  // Reset form when event changes
+  useEffect(() => {
+    if (event) {
+      form.reset({
+        title: event.title,
+        date: event.date,
+        type: event.type,
+        status: event.status,
+        description: event.description,
+        committee: event.committee || [],
+      });
+    } else {
+      form.reset({
+        title: "",
+        date: new Date(),
+        type: "",
+        status: "",
+        description: "",
+        committee: [],
+      });
+    }
+  }, [event, form]);
 
   const selectedCommittee = form.watch("committee");
 
@@ -66,12 +126,15 @@ export function useEventForm({ event, onSubmit }: UseEventFormProps) {
 
   const handleSubmit = async (data: EventFormValues) => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    await onSubmit(data);
-
-    setIsLoading(false);
-    router.push("/events");
+    try {
+      await onSubmit(data);
+      router.push("/events");
+    } catch (error) {
+      // handle in parent
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -85,6 +148,7 @@ export function useEventForm({ event, onSubmit }: UseEventFormProps) {
   return {
     form,
     isLoading,
+    isLoadingMembers,
     members,
     filteredMembers,
     selectedCommittee,

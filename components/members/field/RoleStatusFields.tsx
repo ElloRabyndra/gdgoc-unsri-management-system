@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MEMBER_ROLES, MEMBER_STATUSES } from "@/types";
-import { type MemberFormValues } from "../memberSchema";
+import { type MemberFormValues } from "@/hooks/useMembers";
 
 interface RoleStatusFieldsProps {
   control: Control<MemberFormValues>;
@@ -29,10 +29,7 @@ export function RoleStatusFields({ control }: RoleStatusFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Role</FormLabel>
-            <Select
-              onValueChange={field.onChange}
-              defaultValue={field.value}
-            >
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select role" />
@@ -57,10 +54,7 @@ export function RoleStatusFields({ control }: RoleStatusFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Status</FormLabel>
-            <Select
-              onValueChange={field.onChange}
-              defaultValue={field.value}
-            >
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select status" />

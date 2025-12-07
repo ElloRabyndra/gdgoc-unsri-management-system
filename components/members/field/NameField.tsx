@@ -7,7 +7,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { type MemberFormValues } from "../memberSchema";
+import { type MemberFormValues } from "@/hooks/useMembers";
 
 interface NameFieldProps {
   control: Control<MemberFormValues>;

@@ -1,4 +1,5 @@
 export type Division =
+  | "No Division"
   | "Machine Learning"
   | "Cyber Security"
   | "Front-End Development"
@@ -17,6 +18,7 @@ export type MemberRole = "Member" | "Core Team" | "Executive";
 export type MemberStatus = "Active" | "Non-Active";
 export type EventType = "Offline" | "Online";
 export type EventStatus = "Pending" | "On Going" | "Done";
+export type SortOrder = "high-low" | "low-high";
 
 export interface Member {
   id: string;
@@ -39,12 +41,23 @@ export interface Event {
 }
 
 export interface Attendance {
+  id?: string;
   memberId: string;
   eventId: string;
   present: boolean;
 }
 
+export interface LeaderboardMember extends Member {
+  points: number;
+}
+
+export const SORT_ORDERS: { value: SortOrder; label: string }[] = [
+  { value: "high-low", label: "Highest First" },
+  { value: "low-high", label: "Lowest First" },
+];
+
 export const DIVISIONS: Division[] = [
+  "No Division",
   "Machine Learning",
   "Cyber Security",
   "Front-End Development",
