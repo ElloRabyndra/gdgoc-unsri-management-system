@@ -1,6 +1,8 @@
 # GDGOC Unsri Management System
 
-This is a comprehensive management system for the Google Developer Group of Computing (GDGOC) at Sriwijaya University (Unsri). This system is designed to streamline the management of members, events, and other organizational activities. The live deployment can be accessed at [https://gdgoc-unsri-management-system.vercel.app/](https://gdgoc-unsri-management-system.vercel.app/).
+> The live deployment can be accessed at [https://gdgoc-unsri-management-system.vercel.app/](https://gdgoc-unsri-management-system.vercel.app/).
+
+This is a comprehensive management system for the Google Developer Group of Computing (GDGOC) at Sriwijaya University (Unsri). This system is designed to streamline the management of members, events, and other organizational activities.
 
 ## Features
 
@@ -13,6 +15,7 @@ This management system comes with a variety of features to help manage the GDGOC
 - **Leaderboard**: A gamified system to track and rank members based on their points. It includes features for updating points, searching for members, and filtering by division and status.
 - **Attendance Tracking**: A robust system for tracking member attendance at events. It supports both a compact view for mobile devices and a detailed table view for desktop, and allows for easy toggling of attendance status.
 - **Profile**: A dedicated page for the administrator to view their profile information.
+- **Responsive Design**: The entire website is fully responsive, providing an optimal viewing experience across a wide range of devices, from mobile phones to desktop computers.
 
 ## Tech Stack
 
