@@ -154,22 +154,34 @@ export function useMembers() {
 
   const deleteMember = async (id: string) => {
     try {
-      // Delete the member
+      // Step 1: Delete the member
       const memberRef = doc(db, "members", id);
       await deleteDoc(memberRef);
 
-      // Delete all attendance records for this member
+      // Step 2: Delete all attendance records for this member
       const attendanceRef = collection(db, "attendance");
       const attendanceQuery = query(attendanceRef, where("memberId", "==", id));
       const attendanceSnapshot = await getDocs(attendanceQuery);
 
-      // Delete all related attendance records
       const deleteAttendancePromises = attendanceSnapshot.docs.map((doc) =>
         deleteDoc(doc.ref)
       );
       await Promise.all(deleteAttendancePromises);
 
-      // Remove member from all event committees
+      // Step 3: Delete leaderboard record for this member
+      const leaderboardRef = collection(db, "leaderboard");
+      const leaderboardQuery = query(
+        leaderboardRef,
+        where("memberId", "==", id)
+      );
+      const leaderboardSnapshot = await getDocs(leaderboardQuery);
+
+      const deleteLeaderboardPromises = leaderboardSnapshot.docs.map((doc) =>
+        deleteDoc(doc.ref)
+      );
+      await Promise.all(deleteLeaderboardPromises);
+
+      // Step 4: Remove member from all event committees
       const eventsRef = collection(db, "events");
       const eventsQuery = query(
         eventsRef,
@@ -177,7 +189,6 @@ export function useMembers() {
       );
       const eventsSnapshot = await getDocs(eventsQuery);
 
-      // Update all events that have this member in committee
       const updateEventPromises = eventsSnapshot.docs.map(async (eventDoc) => {
         const eventData = eventDoc.data();
         const updatedCommittee = eventData.committee.filter(
