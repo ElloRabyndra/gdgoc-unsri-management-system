@@ -1,5 +1,6 @@
 "use client";
 
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useParams, useRouter } from "next/navigation";
 import { EventFormHeader } from "@/components/event/EventFormHeader";
 import { EventDetailsForm } from "@/components/event/EventDetailsForm";
@@ -54,31 +55,33 @@ export default function EditEventPage() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <EventFormHeader
-        title="Edit Event"
-        description="Update event details for GDGoC UNSRI"
-        onBack={handleBack}
-      />
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <EventDetailsForm
-          form={form}
-          onSubmit={onSubmit}
-          onCancel={handleCancel}
-          isLoading={isLoading}
-          isEdit={true}
+    <ProtectedRoute>
+      <div className="space-y-6 animate-fade-in">
+        <EventFormHeader
+          title="Edit Event"
+          description="Update event details for GDGoC UNSRI"
+          onBack={handleBack}
         />
 
-        <CommitteePanel
-          selectedMemberIds={selectedCommittee}
-          allMembers={members}
-          filteredMembers={filteredMembers}
-          searchValue={committeeSearch}
-          onSearchChange={setCommitteeSearch}
-          onToggleMember={toggleCommitteeMember}
-        />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <EventDetailsForm
+            form={form}
+            onSubmit={onSubmit}
+            onCancel={handleCancel}
+            isLoading={isLoading}
+            isEdit={true}
+          />
+
+          <CommitteePanel
+            selectedMemberIds={selectedCommittee}
+            allMembers={members}
+            filteredMembers={filteredMembers}
+            searchValue={committeeSearch}
+            onSearchChange={setCommitteeSearch}
+            onToggleMember={toggleCommitteeMember}
+          />
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

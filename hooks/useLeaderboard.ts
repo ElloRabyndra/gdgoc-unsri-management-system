@@ -5,15 +5,16 @@ import {
   useLeaderboard as useLeaderboardQuery,
   useUpdatePoints,
 } from "@/hooks/useFirebaseQueries";
-import {
-  Division,
-  MemberStatus,
-  SortOrder,
-} from "@/types";
+import { Division, MemberStatus, SortOrder } from "@/types";
+import { useRequireAuth } from "./useRequireAuth";
 
 export function useLeaderboard() {
-  // Data fetching menggunakan React Query
-  const { data: members = [], isLoading: isLoadingData, error } = useLeaderboardQuery();
+  const { requireAuth } = useRequireAuth();
+  const {
+    data: members = [],
+    isLoading: isLoadingData,
+    error,
+  } = useLeaderboardQuery();
 
   // Mutation hook
   const updatePointsMutation = useUpdatePoints();
@@ -57,6 +58,7 @@ export function useLeaderboard() {
 
   // Update points menggunakan mutation hook
   const updatePoints = async (memberId: string, pointsChange: number) => {
+    if (!requireAuth()) return;
     try {
       // Find current member
       const member = members.find((m) => m.id === memberId);

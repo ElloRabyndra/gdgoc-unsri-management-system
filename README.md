@@ -114,7 +114,3 @@ Follow these steps to get the project up and running on your local machine:
 ## Troubleshooting
 
 If you encounter any issues during the installation or setup process, please do not hesitate to contact the repository owner for assistance.
-
-## Dedication
-
-> "Semoga keterima jadi Core Team Front-End GDGoC Unsri..."

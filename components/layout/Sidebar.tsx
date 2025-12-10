@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { LogIn } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -31,9 +34,16 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className }: SidebarProps) {
+  const { user } = useAuthContext();
+  const router = useRouter();
   const pathname = usePathname();
   const { handleLogout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleLogin = () => {
+    router.push("/login");
+    setIsOpen(false);
+  };
 
   return (
     <>
@@ -109,13 +119,23 @@ export function Sidebar({ className }: SidebarProps) {
 
           {/* Logout Button */}
           <div className="border-t border-r border-border p-3">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive w-full"
-            >
-              <LogOut className="h-5 w-5" />
-              Logout
-            </button>
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive w-full"
+              >
+                <LogOut className="h-5 w-5" />
+                Logout
+              </button>
+            ) : (
+              <button
+                onClick={handleLogin}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-success/10 hover:text-success w-full"
+              >
+                <LogIn className="h-5 w-5" />
+                Login
+              </button>
+            )}
           </div>
         </div>
       </aside>

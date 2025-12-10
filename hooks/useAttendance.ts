@@ -6,8 +6,10 @@ import {
   useAttendance as useAttendanceQuery,
   useToggleAttendance,
 } from "@/hooks/useFirebaseQueries";
+import { useRequireAuth } from "./useRequireAuth";
 
 export function useAttendance() {
+  const { requireAuth } = useRequireAuth();
   const router = useRouter();
 
   // Fetch data dari tiga sumber dengan React Query
@@ -46,6 +48,7 @@ export function useAttendance() {
 
   // Toggle attendance menggunakan mutation hook
   const toggleAttendance = async (memberId: string, eventId: string) => {
+    if (!requireAuth()) return;
     try {
       await toggleAttendanceMutation.mutateAsync({
         memberId,

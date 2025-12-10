@@ -7,7 +7,7 @@ export function Navbar() {
   const { user } = useAuthContext();
 
   // Get user display name or email
-  const displayName = user?.displayName || user?.email?.split("@")[0] || "User";
+  const displayName = user?.displayName || user?.email?.split("@")[0] || "Guest";
   return (
     <header className="bg-sidebar sticky top-0 z-30 flex h-16 items-center justify-end border-b border-border px-6 lg:px-8">
       {/* Spacer for mobile menu button */}

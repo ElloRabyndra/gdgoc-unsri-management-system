@@ -1,5 +1,6 @@
 "use client";
 
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { EventFormHeader } from "@/components/event/EventFormHeader";
 import { EventDetailsForm } from "@/components/event/EventDetailsForm";
 import { CommitteePanel } from "@/components/event/CommitteePanel";
@@ -42,31 +43,33 @@ export default function NewEventPage() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <EventFormHeader
-        title="Add New Event"
-        description="Create a new event for GDGoC UNSRI"
-        onBack={handleBack}
-      />
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <EventDetailsForm
-          form={form}
-          onSubmit={onSubmit}
-          onCancel={handleCancel}
-          isLoading={isLoading}
-          isEdit={false}
+    <ProtectedRoute>
+      <div className="space-y-6 animate-fade-in">
+        <EventFormHeader
+          title="Add New Event"
+          description="Create a new event for GDGoC UNSRI"
+          onBack={handleBack}
         />
 
-        <CommitteePanel
-          selectedMemberIds={selectedCommittee}
-          allMembers={members}
-          filteredMembers={filteredMembers}
-          searchValue={committeeSearch}
-          onSearchChange={setCommitteeSearch}
-          onToggleMember={toggleCommitteeMember}
-        />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <EventDetailsForm
+            form={form}
+            onSubmit={onSubmit}
+            onCancel={handleCancel}
+            isLoading={isLoading}
+            isEdit={false}
+          />
+
+          <CommitteePanel
+            selectedMemberIds={selectedCommittee}
+            allMembers={members}
+            filteredMembers={filteredMembers}
+            searchValue={committeeSearch}
+            onSearchChange={setCommitteeSearch}
+            onToggleMember={toggleCommitteeMember}
+          />
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

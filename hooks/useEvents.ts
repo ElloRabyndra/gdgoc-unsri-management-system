@@ -7,12 +7,18 @@ import {
   useDeleteEvent,
 } from "@/hooks/useFirebaseQueries";
 import { type Event } from "@/types";
+import { useRequireAuth } from "./useRequireAuth";
 
 export function useEvents() {
+  const { requireAuth } = useRequireAuth();
   const router = useRouter();
 
   // Data fetching menggunakan React Query
-  const { data: events = [], isLoading: isLoadingData, error } = useEventsQuery();
+  const {
+    data: events = [],
+    isLoading: isLoadingData,
+    error,
+  } = useEventsQuery();
 
   // Mutation hooks
   const addEventMutation = useAddEvent();
@@ -31,7 +37,8 @@ export function useEvents() {
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
       const matchesType = typeFilter === "all" || event.type === typeFilter;
-      const matchesStatus = statusFilter === "all" || event.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" || event.status === statusFilter;
       return matchesType && matchesStatus;
     });
   }, [events, typeFilter, statusFilter]);
@@ -67,10 +74,12 @@ export function useEvents() {
 
   // Navigation handlers
   const handleAddEvent = () => {
+    if (!requireAuth()) return;
     router.push("/events/new");
   };
 
   const handleEditEvent = () => {
+    if (!requireAuth()) return;
     if (selectedEvent) {
       router.push(`/events/edit/${selectedEvent.id}`);
       setSelectedEvent(null);
@@ -78,6 +87,7 @@ export function useEvents() {
   };
 
   const handleDeleteEvent = () => {
+    if (!requireAuth()) return;
     if (selectedEvent) {
       setDeletingEvent(selectedEvent);
       setSelectedEvent(null);

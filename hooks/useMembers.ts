@@ -7,6 +7,7 @@ import {
   useDeleteMember,
 } from "@/hooks/useFirebaseQueries";
 import { type Member } from "@/types";
+import { useRequireAuth } from "./useRequireAuth";
 
 export const memberSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -20,6 +21,7 @@ export const memberSchema = z.object({
 export type MemberFormValues = z.infer<typeof memberSchema>;
 
 export function useMembers() {
+  const { requireAuth } = useRequireAuth();
   // Mengambil data menggunakan React Query hook
   const {
     data: members = [],
@@ -59,16 +61,19 @@ export function useMembers() {
 
   // Handler UI yang memicu mutasi
   const handleAddMember = () => {
+    if (!requireAuth()) return;
     setEditingMember(null);
     setIsFormOpen(true);
   };
 
   const handleEditMember = (member: Member) => {
+    if (!requireAuth()) return; 
     setEditingMember(member);
     setIsFormOpen(true);
   };
 
   const handleDeleteMember = (member: Member) => {
+    if (!requireAuth()) return; 
     setDeletingMember(member);
   };
 
