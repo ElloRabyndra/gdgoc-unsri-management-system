@@ -1,25 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { z } from "zod";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  Timestamp,
-  query,
-  orderBy,
-  where,
-} from "firebase/firestore";
-import { db } from "@/firebase/config";
-import {
-  type Member,
-  type Division,
-  type MemberRole,
-  type MemberStatus,
-} from "@/types";
-import { toast } from "sonner";
+import { useMembers as useMembersQuery, useAddMember, useUpdateMember, useDeleteMember } from "@/hooks/useFirebaseQueries";
+import { type Member } from "@/types";
 
 export const memberSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -33,61 +15,24 @@ export const memberSchema = z.object({
 export type MemberFormValues = z.infer<typeof memberSchema>;
 
 export function useMembers() {
-  // Data state
-  const [members, setMembers] = useState<Member[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(true);
+  // 1. Mengambil data menggunakan React Query hook
+  const { data: members = [], isLoading: isLoadingData, error } = useMembersQuery();
 
-  // Filter state
+  // Menggunakan mutation hooks
+  const addMemberMutation = useAddMember();
+  const updateMemberMutation = useUpdateMember();
+  const deleteMemberMutation = useDeleteMember();
+
+  // 2. State untuk UI tetap dikelola di sini (filter, dialog, dll)
   const [search, setSearch] = useState("");
   const [divisionFilter, setDivisionFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-
-  // UI state
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [deletingMember, setDeletingMember] = useState<Member | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch members from Firestore
-  const fetchMembers = async () => {
-    try {
-      setIsLoadingData(true);
-      const membersRef = collection(db, "members");
-      const q = query(membersRef, orderBy("joinDate", "desc"));
-      const querySnapshot = await getDocs(q);
-
-      const membersData: Member[] = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          name: data.name,
-          email: data.email,
-          division: data.division as Division,
-          role: data.role as MemberRole,
-          status: data.status as MemberStatus,
-          joinDate:
-            data.joinDate instanceof Timestamp
-              ? data.joinDate.toDate()
-              : new Date(data.joinDate),
-        };
-      });
-
-      setMembers(membersData);
-    } catch (error) {
-      console.error("Error fetching members:", error);
-      toast.error("Failed to load members");
-    } finally {
-      setIsLoadingData(false);
-    }
-  };
-
-  // Fetch on mount
-  useEffect(() => {
-    fetchMembers();
-  }, []);
-
-  // Filtered members
+  // 3. Logika filter tetap sama, tapi sekarang sumber datanya dari React Query
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
       const matchesSearch =
@@ -103,116 +48,7 @@ export function useMembers() {
     });
   }, [members, search, divisionFilter, roleFilter, statusFilter]);
 
-  // CRUD operations
-  const addMember = async (data: any) => {
-    try {
-      const membersRef = collection(db, "members");
-      const newMemberData = {
-        name: data.name,
-        email: data.email,
-        division: data.division,
-        role: data.role,
-        status: data.status,
-        joinDate: Timestamp.fromDate(data.joinDate),
-      };
-
-      await addDoc(membersRef, newMemberData);
-      toast.success("Member added successfully!");
-
-      // Refresh data
-      await fetchMembers();
-    } catch (error) {
-      console.error("Error adding member:", error);
-      toast.error("Failed to add member");
-      throw error;
-    }
-  };
-
-  const updateMember = async (id: string, data: any) => {
-    try {
-      const memberRef = doc(db, "members", id);
-      const updateData = {
-        name: data.name,
-        email: data.email,
-        division: data.division,
-        role: data.role,
-        status: data.status,
-        joinDate: Timestamp.fromDate(data.joinDate),
-      };
-
-      await updateDoc(memberRef, updateData);
-      toast.success("Member updated successfully!");
-
-      // Refresh data
-      await fetchMembers();
-    } catch (error) {
-      console.error("Error updating member:", error);
-      toast.error("Failed to update member");
-      throw error;
-    }
-  };
-
-  const deleteMember = async (id: string) => {
-    try {
-      // Step 1: Delete the member
-      const memberRef = doc(db, "members", id);
-      await deleteDoc(memberRef);
-
-      // Step 2: Delete all attendance records for this member
-      const attendanceRef = collection(db, "attendance");
-      const attendanceQuery = query(attendanceRef, where("memberId", "==", id));
-      const attendanceSnapshot = await getDocs(attendanceQuery);
-
-      const deleteAttendancePromises = attendanceSnapshot.docs.map((doc) =>
-        deleteDoc(doc.ref)
-      );
-      await Promise.all(deleteAttendancePromises);
-
-      // Step 3: Delete leaderboard record for this member
-      const leaderboardRef = collection(db, "leaderboard");
-      const leaderboardQuery = query(
-        leaderboardRef,
-        where("memberId", "==", id)
-      );
-      const leaderboardSnapshot = await getDocs(leaderboardQuery);
-
-      const deleteLeaderboardPromises = leaderboardSnapshot.docs.map((doc) =>
-        deleteDoc(doc.ref)
-      );
-      await Promise.all(deleteLeaderboardPromises);
-
-      // Step 4: Remove member from all event committees
-      const eventsRef = collection(db, "events");
-      const eventsQuery = query(
-        eventsRef,
-        where("committee", "array-contains", id)
-      );
-      const eventsSnapshot = await getDocs(eventsQuery);
-
-      const updateEventPromises = eventsSnapshot.docs.map(async (eventDoc) => {
-        const eventData = eventDoc.data();
-        const updatedCommittee = eventData.committee.filter(
-          (memberId: string) => memberId !== id
-        );
-
-        return updateDoc(eventDoc.ref, {
-          committee: updatedCommittee,
-        });
-      });
-      await Promise.all(updateEventPromises);
-
-      toast.success("Member deleted successfully!");
-
-      // Refresh data
-      await fetchMembers();
-    } catch (error) {
-      console.error("Error deleting member:", error);
-      toast.error("Failed to delete member");
-      throw error;
-    }
-  };
-
-  // UI Handlers
+  // 4. Handler UI yang memicu mutasi
   const handleAddMember = () => {
     setEditingMember(null);
     setIsFormOpen(true);
@@ -227,36 +63,28 @@ export function useMembers() {
     setDeletingMember(member);
   };
 
-  const handleFormSubmit = async (data: any) => {
-    setIsLoading(true);
-
+  const handleFormSubmit = async (data: MemberFormValues) => {
     try {
       if (editingMember) {
-        await updateMember(editingMember.id, data);
+        await updateMemberMutation.mutateAsync({ id: editingMember.id, data });
       } else {
-        await addMember(data);
+        await addMemberMutation.mutateAsync(data);
       }
-
       setIsFormOpen(false);
       setEditingMember(null);
-    } catch (error) {
-      // Error already handled in CRUD functions
-    } finally {
-      setIsLoading(false);
+    } catch (e) {
+      // Error sudah di-handle di dalam mutation hook (toast)
+      console.error(e);
     }
   };
 
   const handleConfirmDelete = async () => {
     if (!deletingMember) return;
-
-    setIsLoading(true);
     try {
-      await deleteMember(deletingMember.id);
+      await deleteMemberMutation.mutateAsync(deletingMember.id);
       setDeletingMember(null);
-    } catch (error) {
-      // Error already handled in deleteMember
-    } finally {
-      setIsLoading(false);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -273,10 +101,14 @@ export function useMembers() {
     }
   };
 
+  // 5. Return value disesuaikan
   return {
-    members,
+    // Data and state
     filteredMembers,
     isLoadingData,
+    error,
+
+    // Filter state
     search,
     setSearch,
     divisionFilter,
@@ -285,10 +117,14 @@ export function useMembers() {
     setRoleFilter,
     statusFilter,
     setStatusFilter,
+
+    // UI state
     isFormOpen,
     editingMember,
     deletingMember,
-    isLoading,
+    isLoading: addMemberMutation.isPending || updateMemberMutation.isPending || deleteMemberMutation.isPending,
+
+    // UI handlers
     handleAddMember,
     handleEditMember,
     handleDeleteMember,

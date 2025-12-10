@@ -3,10 +3,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
-import { db } from "@/firebase/config";
-import { type Event, type Member } from "@/types";
-import { toast } from "sonner";
+import { useMembers } from "@/hooks/useFirebaseQueries";
+import { type Event } from "@/types";
 
 const eventSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -28,8 +26,9 @@ export function useEventForm({ event, onSubmit }: UseEventFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [committeeSearch, setCommitteeSearch] = useState("");
-  const [members, setMembers] = useState<Member[]>([]);
-  const [isLoadingMembers, setIsLoadingMembers] = useState(true);
+
+  // ✅ Fetch members menggunakan React Query
+  const { data: members = [], isLoading: isLoadingMembers } = useMembers();
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
@@ -42,40 +41,6 @@ export function useEventForm({ event, onSubmit }: UseEventFormProps) {
       committee: [],
     },
   });
-
-  // Fetch members from Firestore
-  useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        setIsLoadingMembers(true);
-        const membersRef = collection(db, "members");
-        const q = query(membersRef, orderBy("name", "asc"));
-        const querySnapshot = await getDocs(q);
-
-        const membersData: Member[] = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name,
-            email: data.email,
-            division: data.division,
-            role: data.role,
-            status: data.status,
-            joinDate: data.joinDate.toDate(),
-          };
-        });
-
-        setMembers(membersData);
-      } catch (error) {
-        console.error("Error fetching members:", error);
-        toast.error("Failed to load members");
-      } finally {
-        setIsLoadingMembers(false);
-      }
-    };
-
-    fetchMembers();
-  }, []);
 
   // Reset form when event changes
   useEffect(() => {

@@ -1,157 +1,66 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  Timestamp,
-  query,
-  orderBy,
-  where,
-} from "firebase/firestore";
-import { db } from "@/firebase/config";
+  useEvents as useEventsQuery,
+  useAddEvent,
+  useUpdateEvent,
+  useDeleteEvent,
+} from "@/hooks/useFirebaseQueries";
 import { type Event } from "@/types";
-import { toast } from "sonner";
 
 export function useEvents() {
   const router = useRouter();
 
-  // Data state
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(true);
+  // Data fetching menggunakan React Query
+  const { data: events = [], isLoading: isLoadingData, error } = useEventsQuery();
+
+  // Mutation hooks
+  const addEventMutation = useAddEvent();
+  const updateEventMutation = useUpdateEvent();
+  const deleteEventMutation = useDeleteEvent();
 
   // Filter state
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // UI state
+  //  UI state
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
-
-  // Fetch events from Firestore
-  const fetchEvents = async () => {
-    try {
-      setIsLoadingData(true);
-      const eventsRef = collection(db, "events");
-      const q = query(eventsRef, orderBy("date", "desc"));
-      const querySnapshot = await getDocs(q);
-
-      const eventsData: Event[] = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: data.title,
-          date:
-            data.date instanceof Timestamp
-              ? data.date.toDate()
-              : new Date(data.date),
-          type: data.type,
-          status: data.status,
-          description: data.description,
-          committee: data.committee || [],
-        };
-      });
-
-      setEvents(eventsData);
-    } catch (error) {
-      console.error("Error fetching events:", error);
-      toast.error("Failed to load events");
-    } finally {
-      setIsLoadingData(false);
-    }
-  };
-
-  // Fetch on mount
-  useEffect(() => {
-    fetchEvents();
-  }, []);
 
   // Filtered events
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
       const matchesType = typeFilter === "all" || event.type === typeFilter;
-      const matchesStatus =
-        statusFilter === "all" || event.status === statusFilter;
+      const matchesStatus = statusFilter === "all" || event.status === statusFilter;
       return matchesType && matchesStatus;
     });
   }, [events, typeFilter, statusFilter]);
 
-  // CRUD operations
+  // CRUD operations menggunakan mutation hooks
   const addEvent = async (eventData: any) => {
     try {
-      const eventsRef = collection(db, "events");
-      const newEventData = {
-        title: eventData.title,
-        date: Timestamp.fromDate(eventData.date),
-        type: eventData.type,
-        status: eventData.status,
-        description: eventData.description,
-        committee: eventData.committee || [],
-      };
-
-      await addDoc(eventsRef, newEventData);
-      toast.success("Event added successfully!");
-
-      // Refresh data
-      await fetchEvents();
+      await addEventMutation.mutateAsync(eventData);
     } catch (error) {
-      console.error("Error adding event:", error);
-      toast.error("Failed to add event");
+      // Error sudah di-handle di mutation hook (toast)
+      console.error(error);
       throw error;
     }
   };
 
   const updateEvent = async (id: string, eventData: any) => {
     try {
-      const eventRef = doc(db, "events", id);
-      const updateData = {
-        title: eventData.title,
-        date: Timestamp.fromDate(eventData.date),
-        type: eventData.type,
-        status: eventData.status,
-        description: eventData.description,
-        committee: eventData.committee || [],
-      };
-
-      await updateDoc(eventRef, updateData);
-      toast.success("Event updated successfully!");
-
-      // Refresh data
-      await fetchEvents();
+      await updateEventMutation.mutateAsync({ id, data: eventData });
     } catch (error) {
-      console.error("Error updating event:", error);
-      toast.error("Failed to update event");
+      console.error(error);
       throw error;
     }
   };
 
   const deleteEvent = async (id: string) => {
     try {
-      // Hapus event
-      const eventRef = doc(db, "events", id);
-      await deleteDoc(eventRef);
-
-      // Hapus semua attendance yang terkait dengan event ini
-      const attendanceRef = collection(db, "attendance");
-      const q = query(attendanceRef, where("eventId", "==", id));
-      const attendanceSnapshot = await getDocs(q);
-
-      // Hapus semua attendance records
-      const deletePromises = attendanceSnapshot.docs.map((doc) =>
-        deleteDoc(doc.ref)
-      );
-      await Promise.all(deletePromises);
-
-      toast.success("Event deleted successfully!");
-
-      // Refresh data
-      await fetchEvents();
+      await deleteEventMutation.mutateAsync(id);
     } catch (error) {
-      console.error("Error deleting event:", error);
-      toast.error("Failed to delete event");
+      console.error(error);
       throw error;
     }
   };
@@ -178,8 +87,13 @@ export function useEvents() {
   // Dialog handlers
   const handleConfirmDelete = async () => {
     if (!deletingEvent) return;
-    await deleteEvent(deletingEvent.id);
-    setDeletingEvent(null);
+    try {
+      await deleteEvent(deletingEvent.id);
+      setDeletingEvent(null);
+    } catch (error) {
+      // Error sudah di-handle
+      console.error(error);
+    }
   };
 
   const handleEventClick = (event: Event) => {
@@ -199,11 +113,12 @@ export function useEvents() {
     return events.find((e) => e.id === id);
   };
 
+  // Return value
   return {
-    // Data
     events,
     filteredEvents,
     isLoadingData,
+    error,
     selectedEvent,
     deletingEvent,
     typeFilter,
