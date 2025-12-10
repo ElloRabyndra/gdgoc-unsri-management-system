@@ -1,6 +1,11 @@
 import { useState, useMemo } from "react";
 import { z } from "zod";
-import { useMembers as useMembersQuery, useAddMember, useUpdateMember, useDeleteMember } from "@/hooks/useFirebaseQueries";
+import {
+  useMembers as useMembersQuery,
+  useAddMember,
+  useUpdateMember,
+  useDeleteMember,
+} from "@/hooks/useFirebaseQueries";
 import { type Member } from "@/types";
 
 export const memberSchema = z.object({
@@ -15,15 +20,19 @@ export const memberSchema = z.object({
 export type MemberFormValues = z.infer<typeof memberSchema>;
 
 export function useMembers() {
-  // 1. Mengambil data menggunakan React Query hook
-  const { data: members = [], isLoading: isLoadingData, error } = useMembersQuery();
+  // Mengambil data menggunakan React Query hook
+  const {
+    data: members = [],
+    isLoading: isLoadingData,
+    error,
+  } = useMembersQuery();
 
   // Menggunakan mutation hooks
   const addMemberMutation = useAddMember();
   const updateMemberMutation = useUpdateMember();
   const deleteMemberMutation = useDeleteMember();
 
-  // 2. State untuk UI tetap dikelola di sini (filter, dialog, dll)
+  // State untuk UI tetap dikelola di sini (filter, dialog, dll)
   const [search, setSearch] = useState("");
   const [divisionFilter, setDivisionFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -32,7 +41,7 @@ export function useMembers() {
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [deletingMember, setDeletingMember] = useState<Member | null>(null);
 
-  // 3. Logika filter tetap sama, tapi sekarang sumber datanya dari React Query
+  // Logika filter tetap sama, tapi sekarang sumber datanya dari React Query
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
       const matchesSearch =
@@ -48,7 +57,7 @@ export function useMembers() {
     });
   }, [members, search, divisionFilter, roleFilter, statusFilter]);
 
-  // 4. Handler UI yang memicu mutasi
+  // Handler UI yang memicu mutasi
   const handleAddMember = () => {
     setEditingMember(null);
     setIsFormOpen(true);
@@ -101,14 +110,12 @@ export function useMembers() {
     }
   };
 
-  // 5. Return value disesuaikan
+  // Return value disesuaikan
   return {
-    // Data and state
+    members,
     filteredMembers,
     isLoadingData,
     error,
-
-    // Filter state
     search,
     setSearch,
     divisionFilter,
@@ -117,14 +124,13 @@ export function useMembers() {
     setRoleFilter,
     statusFilter,
     setStatusFilter,
-
-    // UI state
     isFormOpen,
     editingMember,
     deletingMember,
-    isLoading: addMemberMutation.isPending || updateMemberMutation.isPending || deleteMemberMutation.isPending,
-
-    // UI handlers
+    isLoading:
+      addMemberMutation.isPending ||
+      updateMemberMutation.isPending ||
+      deleteMemberMutation.isPending,
     handleAddMember,
     handleEditMember,
     handleDeleteMember,
