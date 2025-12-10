@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,9 +14,8 @@ const loginSchema = z.object({
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
-export function useAuth() {
+export function useAuth(returnUrl?: string | null) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
@@ -32,7 +31,6 @@ export function useAuth() {
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       toast.success("Login successful!");
-      const returnUrl = searchParams.get("returnUrl");
       router.push(returnUrl ? decodeURIComponent(returnUrl) : "/dashboard");
     } catch (error: any) {
       const errorCode = error.code;

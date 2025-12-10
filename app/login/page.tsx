@@ -1,10 +1,13 @@
 "use client";
+
+import { Suspense } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { LoginHeader } from "@/components/login/LoginHeader";
 import { LoginForm } from "@/components/login/LoginForm";
 import { LoginDecoration } from "@/components/login/LoginDecoration";
 import { PublicRoute } from "@/components/auth/PublicRoute";
 import { useAuth } from "@/hooks/useAuth";
+import { LoginPageContent } from "./LoginPageContent";
 
 export default function Login() {
   const { form, isLoading, handleLogin } = useAuth();
@@ -14,18 +17,18 @@ export default function Login() {
       <div className="min-h-screen grid lg:grid-cols-2">
         <LoginDecoration />
         <div className="flex items-center justify-center p-6 lg:p-12 bg-background">
-          <Card className="w-full max-w-md shadow-xl animate-fade-in bg-transparent border-none">
-            <CardHeader className="text-center space-y-4 pb-2">
-              <LoginHeader />
-            </CardHeader>
-            <CardContent className="space-y-6 pt-4">
-              <LoginForm
-                form={form}
-                onSubmit={handleLogin}
-                isLoading={isLoading}
-              />
-            </CardContent>
-          </Card>
+          <Suspense
+            fallback={
+              <div className="flex min-h-[400px] items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                  <p className="text-sm text-muted-foreground">Loading...</p>
+                </div>
+              </div>
+            }
+          >
+            <LoginPageContent />
+          </Suspense>
         </div>
       </div>
     </PublicRoute>
