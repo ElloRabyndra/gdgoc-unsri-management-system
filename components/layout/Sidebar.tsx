@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthContext } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -39,6 +39,22 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const { handleLogout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+
+  // Lock/unlock body scroll ketika sidebar dibuka/ditutup
+  useEffect(() => {
+    if (isOpen) {
+      // Prevent scroll pada body
+      document.body.style.overflow = "hidden";
+    } else {
+      // Restore scroll pada body
+      document.body.style.overflow = "";
+    }
+
+    // Cleanup ketika component unmount
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   const handleLogin = () => {
     router.push("/login");
